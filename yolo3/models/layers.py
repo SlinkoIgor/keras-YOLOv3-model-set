@@ -5,10 +5,9 @@ Common layer definition for YOLOv3 models building
 """
 from functools import wraps, reduce
 
-import tensorflow as tf
 import tensorflow.keras.backend as K
 from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Concatenate, MaxPooling2D
-from tensorflow.keras.layers import LeakyReLU, UpSampling2D, PReLU, ReLU
+from tensorflow.keras.layers import LeakyReLU, UpSampling2D
 from tensorflow.keras.layers import BatchNormalization
 from tensorflow.keras.regularizers import l2
 
@@ -53,10 +52,10 @@ def Darknet_Depthwise_Separable_Conv2D_BN_Leaky(filters, kernel_size=(3, 3), blo
     return compose(
         DarknetDepthwiseConv2D(kernel_size, name='conv_dw_' + block_id_str, **no_bias_kwargs),
         CustomBatchNormalization(name='conv_dw_%s_bn' % block_id_str),
-        ReLU(name='conv_dw_%s_leaky_relu' % block_id_str),
+        LeakyReLU(alpha=0.1, name='conv_dw_%s_leaky_relu' % block_id_str),
         YoloConv2D(filters, (1,1), padding='same', use_bias=False, strides=(1, 1), name='conv_pw_%s' % block_id_str),
         CustomBatchNormalization(name='conv_pw_%s_bn' % block_id_str),
-        ReLU(name='conv_pw_%s_leaky_relu' % block_id_str))
+        LeakyReLU(alpha=0.1, name='conv_pw_%s_leaky_relu' % block_id_str))
 
 
 def Depthwise_Separable_Conv2D_BN_Leaky(filters, kernel_size=(3, 3), block_id_str=None):
@@ -66,10 +65,10 @@ def Depthwise_Separable_Conv2D_BN_Leaky(filters, kernel_size=(3, 3), block_id_st
     return compose(
         YoloDepthwiseConv2D(kernel_size, padding='same', name='conv_dw_' + block_id_str),
         CustomBatchNormalization(name='conv_dw_%s_bn' % block_id_str),
-        ReLU(name='conv_dw_%s_leaky_relu' % block_id_str),
+        LeakyReLU(alpha=0.1, name='conv_dw_%s_leaky_relu' % block_id_str),
         YoloConv2D(filters, (1,1), padding='same', use_bias=False, strides=(1, 1), name='conv_pw_%s' % block_id_str),
         CustomBatchNormalization(name='conv_pw_%s_bn' % block_id_str),
-        ReLU(name='conv_pw_%s_leaky_relu' % block_id_str))
+        LeakyReLU(alpha=0.1, name='conv_pw_%s_leaky_relu' % block_id_str))
 
 
 def DarknetConv2D_BN_Leaky(*args, **kwargs):
@@ -79,7 +78,7 @@ def DarknetConv2D_BN_Leaky(*args, **kwargs):
     return compose(
         DarknetConv2D(*args, **no_bias_kwargs),
         CustomBatchNormalization(),
-        ReLU())
+        LeakyReLU(alpha=0.1))
 
 
 def Spp_Conv2D_BN_Leaky(x, num_filters):
