@@ -12,7 +12,7 @@ from tensorflow.keras.layers import Input, Lambda
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
 
-from yolo3.models.yolo3_darknet import yolo3_body, custom_tiny_yolo3_body, yolo3lite_body, tiny_yolo3lite_body, custom_yolo3_spp_body
+from yolo3.models.yolo3_darknet import yolo3_body, custom_tiny_yolo3_body, thin_custom_tiny_yolo3_body, yolo3lite_body, tiny_yolo3lite_body, custom_yolo3_spp_body
 from yolo3.models.yolo3_mobilenet import yolo3_mobilenet_body, tiny_yolo3_mobilenet_body, yolo3lite_mobilenet_body, yolo3lite_spp_mobilenet_body, tiny_yolo3lite_mobilenet_body
 from yolo3.models.yolo3_mobilenetv2 import yolo3_mobilenetv2_body, tiny_yolo3_mobilenetv2_body, yolo3lite_mobilenetv2_body, yolo3lite_spp_mobilenetv2_body, tiny_yolo3lite_mobilenetv2_body, yolo3_ultralite_mobilenetv2_body, tiny_yolo3_ultralite_mobilenetv2_body
 from yolo3.models.yolo3_shufflenetv2 import yolo3_shufflenetv2_body, tiny_yolo3_shufflenetv2_body, yolo3lite_shufflenetv2_body, yolo3lite_spp_shufflenetv2_body, tiny_yolo3lite_shufflenetv2_body
@@ -169,6 +169,7 @@ yolo3_tiny_model_map = {
     'tiny_yolo3_efficientnet_lite': [tiny_yolo3lite_efficientnet_body, 235, None],
 
     'tiny_yolo3_darknet': [custom_tiny_yolo3_body, 20, os.path.join(ROOT_PATH, 'weights', 'yolov3-tiny.h5')],
+    'thin_tiny_yolo3_darknet': [thin_custom_tiny_yolo3_body, 20, os.path.join(ROOT_PATH, 'weights', 'yolov3-tiny.h5')],
     #Doesn't have pretrained weights, so no need to return backbone length
     'tiny_yolo3_darknet_lite': [tiny_yolo3lite_body, 0, None],
     'tiny_yolo3_vgg16': [tiny_yolo3_vgg16_body, 19, None],
