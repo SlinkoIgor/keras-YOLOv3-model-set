@@ -397,15 +397,17 @@ def handle_prediction(prediction, image_file, image, image_shape, anchors, class
         output_file = os.path.join(output_path, os.path.basename(image_file))
         Image.fromarray(image).save(output_file)
         
+        output_annotation_file = os.path.splitext(output_file)[0] + '.txt'
+
         # log the output in Yolov5 format
-        with open(output_file + '.txt', 'w') as f:
+        with open(output_annotation_file, 'w') as f:
             for box, cls, score in zip(boxes, classes, scores):
                 xmin, ymin, xmax, ymax = box
-                x_center = x_min + (x_max - x_min) / 2
-                y_center = y_min + (y_max - y_min) / 2
-                width = x_max - x_min
-                height = y_max - y_min
-                f.write('{} {} {} {} {} {}\n'.format(class_names[cls], score, x_center, y_center, width, height)
+                xmin /= image_shape[1]
+                xmax /= image_shape[1]
+                ymin /= image_shape[0]
+                ymax /= image_shape[0]
+                f.write('{} {} {} {} {} {}\n'.format(cls, score, xmin, ymin, xmax, ymax))
     else:
         Image.fromarray(image).show()
     
@@ -438,11 +440,16 @@ def load_graph(model_path):
     return graph
 
 
-def load_val_model(model_path):
+def load_val_model(model_path, libedgetpu_path=None):
     # support of tflite model
     if model_path.endswith('.tflite'):
         from tensorflow.lite.python import interpreter as interpreter_wrapper
-        model = interpreter_wrapper.Interpreter(model_path=model_path)
+        experimental_delegates = None
+        if libedgetpu_path is not None:
+            import tflite_runtime.interpreter as tflite
+            experimental_delegates=[tflite.load_delegate(libedgetpu_path)]
+        model = interpreter_wrapper.Interpreter(
+            model_path=model_path, experimental_delegates=experimental_delegates)
         model.allocate_tensors()
 
     # support of MNN model
@@ -481,9 +488,14 @@ def main():
     parser.add_argument('--loop_count', help='loop inference for certain times', type=int, default=1)
     parser.add_argument('--output_path', help='output path to save predict result, default=%(default)s', type=str, required=False, default=None)
     parser.add_argument('--uint8_mode', help='Store True if the model was quantized to uint8', action='store_true')
-
+    parser.add_argument('--libedgetpu_path', help='For the Coral model. True will result with default value (libedgetpu.so.1). Otherwise supply with library path', type=str, required=False, default=None)
 
     args = parser.parse_args()
+
+    if args.libedgetpu_path:
+        args.uint8_mode = True
+        if args.libedgetpu_path == 'True':
+            args.libedgetpu_path = 'libedgetpu.so.1'
 
     # param parse
     anchors = get_anchors(args.anchors_path)
@@ -492,15 +504,16 @@ def main():
     model_input_shape = (int(height), int(width))
     assert (model_input_shape[0]%32 == 0 and model_input_shape[1]%32 == 0), 'model_input_shape should be multiples of 32'
 
-
-    model = load_val_model(args.model_path)
+    model = load_val_model(args.model_path, args.libedgetpu_path)
     if args.model_path.endswith('.mnn'):
         #MNN inference engine need create session
         session = model.createSession()
 
     # get image file list or single image
     if os.path.isdir(args.image_path):
-        image_files = glob.glob(os.path.join(args.image_path, '*'))
+        img_extensions = ['*.png', '*.jpg', '*.jpeg', '*.gif']
+        image_files = [file for ext in img_extensions 
+                       for file in glob.glob(os.path.join(args.image_path, ext))]
         assert args.output_path, 'need to specify output path if you use image directory as input.'
     else:
         image_files = [args.image_path]
